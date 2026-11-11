@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>امتحان الوحدة الثالثة (الدرس 1-3) - Byte Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --primary: #0ea5e9; --primary-dark: #0284c7; --success: #10b981; --danger: #ef4444; }
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f8fafc 100%);
+    color: #1e293b; padding: 20px; line-height: 1.9; min-height: 100vh;
+    overflow-x: hidden; position: relative;
+  }
+  .bg-animation { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  .bg-animation .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; animation: float 20s infinite ease-in-out; }
+  .bg-animation .orb:nth-child(1) { width: 400px; height: 400px; background: radial-gradient(circle, #38bdf8, transparent); top: -100px; right: -100px; }
+  .bg-animation .orb:nth-child(2) { width: 350px; height: 350px; background: radial-gradient(circle, #7dd3fc, transparent); bottom: -100px; left: -100px; animation-delay: -7s; }
+  .bg-animation .orb:nth-child(3) { width: 300px; height: 300px; background: radial-gradient(circle, #bae6fd, transparent); top: 50%; left: 50%; animation-delay: -14s; }
+  @keyframes float { 0%, 100% { transform: translate(0, 0) scale(1); } 33% { transform: translate(50px, -50px) scale(1.1); } 66% { transform: translate(-50px, 50px) scale(0.9); } }
+  .container { max-width: 950px; margin: 0 auto; position: relative; z-index: 1; }
+  header {
+    background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%);
+    padding: 40px 25px; border-radius: 24px; text-align: center; margin-bottom: 25px;
+    box-shadow: 0 20px 50px rgba(14, 165, 233, 0.3), 0 0 0 1px rgba(255,255,255,0.1) inset;
+    position: relative; overflow: hidden;
+  }
+  header::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent); animation: shine 4s infinite; }
+  @keyframes shine { 0% { left: -100%; } 50%, 100% { left: 100%; } }
+  header::after { content: ''; position: absolute; top: -50%; right: -20%; width: 300px; height: 300px; background: rgba(255,255,255,0.08); border-radius: 50%; }
+  .header-icon {
+    display: inline-flex; align-items: center; justify-content: center; width: 70px; height: 70px;
+    background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); border-radius: 20px;
+    margin-bottom: 15px; border: 2px solid rgba(255,255,255,0.25);
+    animation: pulse-icon 2.5s infinite; position: relative; z-index: 1;
+  }
+  @keyframes pulse-icon { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); } 50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255,255,255,0); } }
+  .header-icon svg { width: 38px; height: 38px; stroke: #fff; stroke-width: 2; fill: none; }
+  header h1 { font-size: 30px; color: #fff; margin-bottom: 8px; font-weight: 900; position: relative; z-index: 1; }
+  header p { color: #e0f2fe; font-size: 15px; font-weight: 500; position: relative; z-index: 1; }
+  .info-bar {
+    display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;
+    background: #ffffff; padding: 18px 20px; border-radius: 16px; margin-bottom: 20px;
+    box-shadow: 0 4px 20px rgba(14, 165, 233, 0.12); border: 2px solid #bae6fd;
+    font-size: 14px; font-weight: 700;
+  }
+  .info-item { display: flex; align-items: center; gap: 8px; color: #0369a1; }
+  .info-item svg { width: 18px; height: 18px; stroke: #0ea5e9; stroke-width: 2.5; fill: none; }
+  .info-item span { color: #0284c7; font-weight: 900; }
+  .progress-container {
+    position: sticky; top: 10px; z-index: 100; background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(12px); padding: 16px 20px; border-radius: 16px; margin-bottom: 22px;
+    box-shadow: 0 8px 30px rgba(14, 165, 233, 0.18); border: 2px solid #bae6fd;
+  }
+  .progress-info { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; font-weight: 800; color: #0369a1; flex-wrap: wrap; gap: 8px; }
+  .progress-info > div { display: flex; align-items: center; gap: 6px; }
+  .progress-info svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.5; fill: none; }
+  .progress-bar { height: 14px; background: #e0f2fe; border-radius: 10px; overflow: hidden; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #38bdf8, #0ea5e9, #0284c7); width: 0%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 10px; position: relative; overflow: hidden; }
+  .progress-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent); animation: progress-shine 1.5s infinite; }
+  @keyframes progress-shine { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .question {
+    background: #ffffff; border: 2px solid #e0f2fe; border-radius: 18px; padding: 24px;
+    margin-bottom: 18px; transition: border-color 0.4s ease, box-shadow 0.4s ease;
+    box-shadow: 0 2px 12px rgba(14, 165, 233, 0.06);
+  }
+  .question:hover { border-color: #7dd3fc; box-shadow: 0 8px 25px rgba(14, 165, 233, 0.15); }
+  .question.answered-correct { border-color: #34d399; background: linear-gradient(135deg, #f0fdf4, #ffffff); animation: correctPulse 0.6s ease; }
+  .question.answered-wrong { border-color: #f87171; background: linear-gradient(135deg, #fef2f2, #ffffff); animation: wrongShake 0.5s ease; }
+  @keyframes correctPulse { 0% { transform: scale(1); } 50% { transform: scale(1.01); box-shadow: 0 0 30px rgba(16, 185, 129, 0.3); } 100% { transform: scale(1); } }
+  @keyframes wrongShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .q-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .q-num {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7); color: #fff; padding: 5px 16px;
+    border-radius: 20px; font-size: 13px; font-weight: 800; display: inline-flex;
+    align-items: center; gap: 6px; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+  }
+  .q-num svg { width: 14px; height: 14px; stroke: #fff; stroke-width: 3; fill: none; }
+  .q-type { font-size: 12px; padding: 5px 14px; border-radius: 12px; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; }
+  .q-type svg { width: 13px; height: 13px; stroke: currentColor; stroke-width: 2.5; fill: none; }
+  .q-type.tf { background: #fef3c7; color: #b45309; }
+  .q-type.mc { background: #dbeafe; color: #1e40af; }
+  .q-text { font-size: 18px; color: #0f172a; margin-bottom: 16px; font-weight: 600; line-height: 1.8; }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 12px; padding: 14px 18px;
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: flex;
+    align-items: center; gap: 12px; font-size: 15px; font-weight: 600; color: #1e293b;
+    position: relative; overflow: hidden;
+  }
+  .option::before { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.05), transparent); transform: translateX(-100%); transition: transform 0.5s; }
+  .option:hover:not(.locked)::before { transform: translateX(100%); }
+  .option:hover:not(.locked) { border-color: #38bdf8; background: #f0f9ff; transform: translateX(-4px); box-shadow: 0 4px 15px rgba(14, 165, 233, 0.15); }
+  .option.locked { cursor: default; }
+  .option.correct { border-color: #10b981 !important; background: linear-gradient(135deg, #d1fae5, #ecfdf5) !important; color: #065f46 !important; animation: correctGlow 0.8s ease; }
+  @keyframes correctGlow { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); } 100% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); } }
+  .option.wrong { border-color: #ef4444 !important; background: linear-gradient(135deg, #fee2e2, #fef2f2) !important; color: #991b1b !important; }
+  .option.correct .label-letter { background: linear-gradient(135deg, #10b981, #059669); color: #fff; transform: scale(1.1) rotate(360deg); transition: all 0.5s; }
+  .option.wrong .label-letter { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+  .option input { accent-color: #0ea5e9; transform: scale(1.3); cursor: pointer; flex-shrink: 0; }
+  .option .label-letter {
+    display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px;
+    background: #e0f2fe; color: #0369a1; border-radius: 50%; font-weight: 900; font-size: 14px;
+    flex-shrink: 0; transition: all 0.3s;
+  }
+  .result-icon { margin-right: auto; width: 22px; height: 22px; display: none; }
+  .option.correct .result-icon, .option.wrong .result-icon { display: block; animation: iconPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+  .option.correct .result-icon svg { stroke: #10b981; stroke-width: 3; fill: none; width: 100%; height: 100%; }
+  .option.wrong .result-icon svg { stroke: #ef4444; stroke-width: 3; fill: none; width: 100%; height: 100%; }
+  @keyframes iconPop { 0% { transform: scale(0) rotate(-180deg); } 100% { transform: scale(1) rotate(0); } }
+  .feedback {
+    margin-top: 16px; padding: 18px 20px; border-radius: 14px; font-size: 15px;
+    display: none; border-right: 5px solid; line-height: 1.8;
+    animation: feedbackSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
+  }
+  .feedback::before { content: ''; position: absolute; top: 0; right: 0; width: 100%; height: 3px; animation: feedbackTopBar 0.6s ease; }
+  @keyframes feedbackTopBar { from { width: 0; } to { width: 100%; } }
+  .feedback.show { display: block; }
+  .feedback.correct-fb { background: linear-gradient(135deg, #d1fae5, #f0fdf4); border-color: #10b981; color: #065f46; }
+  .feedback.correct-fb::before { background: linear-gradient(90deg, #10b981, #34d399); }
+  .feedback.wrong-fb { background: linear-gradient(135deg, #fee2e2, #fef2f2); border-color: #ef4444; color: #7f1d1d; }
+  .feedback.wrong-fb::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+  @keyframes feedbackSlide { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+  .fb-header { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 16px; margin-bottom: 8px; }
+  .fb-header .fb-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; animation: iconPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+  .fb-header .fb-icon svg { width: 16px; height: 16px; stroke: #fff; stroke-width: 3; fill: none; }
+  .correct-fb .fb-icon { background: #10b981; }
+  .wrong-fb .fb-icon { background: #ef4444; }
+  .fb-exp { font-weight: 500; display: flex; align-items: flex-start; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,0.15); }
+  .fb-exp svg { width: 18px; height: 18px; stroke: currentColor; stroke-width: 2.5; fill: none; flex-shrink: 0; margin-top: 3px; }
+  .correct-answer-line { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+  .correct-answer-line svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.5; fill: none; }
+  .result {
+    display: none; background: linear-gradient(135deg, #e0f2fe, #bae6fd, #7dd3fc); padding: 40px 25px;
+    border-radius: 24px; text-align: center; margin-top: 25px; color: #0c4a6e;
+    border: 3px solid #38bdf8; box-shadow: 0 20px 50px rgba(14, 165, 233, 0.25);
+    position: relative; overflow: hidden;
+  }
+  .result::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.4), transparent 70%); animation: rotate 20s linear infinite; pointer-events: none; }
+  @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .result.show { display: block; animation: resultPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55); }
+  @keyframes resultPop { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+  .result > * { position: relative; z-index: 1; }
+  .result-icon-big { display: inline-flex; align-items: center; justify-content: center; width: 90px; height: 90px; background: linear-gradient(135deg, #0ea5e9, #0284c7); border-radius: 50%; margin-bottom: 15px; box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4); animation: trophyBounce 1.5s infinite; }
+  @keyframes trophyBounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  .result-icon-big svg { width: 50px; height: 50px; stroke: #fff; stroke-width: 2; fill: none; }
+  .result h2 { font-size: 30px; margin-bottom: 15px; font-weight: 900; }
+  .result .score { font-size: 70px; font-weight: 900; color: #0284c7; line-height: 1; text-shadow: 0 4px 15px rgba(14, 165, 233, 0.3); animation: scoreCount 0.8s ease; }
+  @keyframes scoreCount { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result .score-max { font-size: 30px; color: #64748b; font-weight: 700; }
+  .result p { font-size: 19px; margin-top: 15px; font-weight: 700; }
+  .result .stats { display: flex; justify-content: center; gap: 20px; margin-top: 25px; flex-wrap: wrap; }
+  .result .stat { background: #ffffff; padding: 15px 28px; border-radius: 14px; font-weight: 800; font-size: 16px; box-shadow: 0 6px 20px rgba(14, 165, 233, 0.15); display: flex; align-items: center; gap: 10px; transition: transform 0.3s; }
+  .result .stat:hover { transform: translateY(-3px); }
+  .result .stat svg { width: 22px; height: 22px; stroke-width: 2.5; fill: none; }
+  .result .stat.correct { color: #059669; border: 2px solid #34d399; }
+  .result .stat.correct svg { stroke: #059669; }
+  .result .stat.wrong { color: #dc2626; border: 2px solid #f87171; }
+  .result .stat.wrong svg { stroke: #dc2626; }
+  footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 14px; font-weight: 700; margin-top: 30px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  footer svg { width: 18px; height: 18px; stroke: #0ea5e9; stroke-width: 2; fill: none; }
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    header { padding: 28px 18px; border-radius: 20px; }
+    .header-icon { width: 60px; height: 60px; }
+    .header-icon svg { width: 32px; height: 32px; }
+    header h1 { font-size: 21px; }
+    header p { font-size: 12px; }
+    .info-bar { font-size: 12px; padding: 12px; gap: 6px; }
+    .question { padding: 18px 15px; }
+    .q-text { font-size: 16px; }
+    .option { font-size: 14px; padding: 12px 14px; }
+    .option .label-letter { width: 26px; height: 26px; font-size: 13px; }
+    .result .score { font-size: 50px; }
+    .result-icon-big { width: 70px; height: 70px; }
+    .result-icon-big svg { width: 40px; height: 40px; }
+    .result h2 { font-size: 22px; }
+    .result .stat { padding: 12px 20px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-animation">
+  <div class="orb"></div>
+  <div class="orb"></div>
+  <div class="orb"></div>
+</div>
+
+<div class="container">
+
+  <header>
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+        <path d="M2 17l10 5 10-5"></path>
+        <path d="M2 12l10 5 10-5"></path>
+      </svg>
+    </div>
+    <h1>امتحان الوحدة الثالثة</h1>
+    <p>أمن المعلومات • كلمات المرور والمصادقة • الاحتيال وسياسة الأمن &nbsp;•&nbsp; 30 سؤال</p>
+  </header>
+
+  <div class="info-bar">
+    <div class="info-item">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+      عدد الأسئلة: <span>30</span>
+    </div>
+    <div class="info-item">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polyline></svg>
+      تصحيح فوري
+    </div>
+    <div class="info-item">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+      تفسير لكل سؤال
+    </div>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-info">
+      <div>
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+        التقدم: <span id="answeredCount">0</span> / 30
+      </div>
+      <div>
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        الإجابات الصحيحة: <span id="correctCount">0</span>
+      </div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <form id="quizForm"></form>
+
+  <div class="result" id="result">
+    <div class="result-icon-big">
+      <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"></circle><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline></svg>
+    </div>
+    <h2>نتيجتك النهائية</h2>
+    <div class="score"><span id="scoreNum">0</span><span class="score-max"> / 30</span></div>
+    <p id="scoreMsg"></p>
+    <div class="stats">
+      <div class="stat correct">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+        صحيح: <span id="statCorrect">0</span>
+      </div>
+      <div class="stat wrong">
+        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+        خطأ: <span id="statWrong">0</span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg>
+    Byte Lab – جميع الحقوق محفوظة
+  </footer>
+</div>
+
+<script>
+const icons = {
+  check: `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+  x: `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`,
+  bulb: `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>`,
+  key: `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>`,
+  file: `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`,
+  tag: `<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>`
+};
+
+// ====== 30 سؤالاً: 10 للدرس الأول، 10 للدرس الثاني، 10 للدرس الثالث ======
+const questions = [
+  // ===== الدرس الأول: أمن المعلومات =====
+  {
+    type: "mc",
+    q: "ما هي العناصر الأساسية الثلاثة لأمن المعلومات؟",
+    options: ["السرية، السلامة، التوافرية", "السرية، التشفير، المصادقة", "الحماية، السرية، النسخ الاحتياطي", "التوافرية، جدار الحماية، كلمات المرور"],
+    answer: 0,
+    exp: "العناصر الأساسية الثلاثة لأمن المعلومات هي: السرية (Confidentiality)، السلامة (Integrity)، التوافرية (Availability)."
+  },
+  {
+    type: "mc",
+    q: "الحالة التي يمكن فيها فقط للأفراد المصرّح لهم الوصول إلى المعلومات تسمى:",
+    options: ["السلامة (Integrity)", "السرية (Confidentiality)", "التوافرية (Availability)", "المصادقة (Authentication)"],
+    answer: 1,
+    exp: "السرية (Confidentiality) هي الحالة التي يمكن فيها فقط للأفراد المصرّح لهم الوصول إلى المعلومات."
+  },
+  {
+    type: "tf",
+    q: "السلامة (Integrity) هي الحالة التي لم يتم فيها تدمير المعلومات أو العبث بها أو محوها.",
+    answer: true,
+    exp: "صحيح. السلامة (Integrity) تعني أن المعلومات لم يتم تدميرها أو العبث بها أو محوها."
+  },
+  {
+    type: "mc",
+    q: "البرنامج الذي يتنكر كبرنامج شرعي ويتسلل إلى النظام ويبدأ الهجمات بهدوء هو:",
+    options: ["الدودة (Worm)", "فيروس الكمبيوتر (Computer virus)", "حصان طروادة (Trojan horse)", "برنامج الفدية (Ransomware)"],
+    answer: 2,
+    exp: "حصان طروادة (Trojan horse) هو برنامج يتنكر كبرنامج شرعي، يتسلل إلى النظام ويبدأ الهجمات بهدوء."
+  },
+  {
+    type: "mc",
+    q: "البرنامج الذي يجمع المعلومات الشخصية دون علم المستخدم ويرسلها إلى أطراف ثالثة هو:",
+    options: ["برنامج الإعلانات (Adware)", "برنامج التجسس (Spyware)", "الدودة (Worm)", "فيروس الكمبيوتر"],
+    answer: 1,
+    exp: "برنامج التجسس (Spyware) يجمع المعلومات الشخصية دون علم المستخدم ويرسلها إلى أطراف ثالثة."
+  },
+  {
+    type: "tf",
+    q: "برنامج الفدية (Ransomware) يجعل البيانات غير قابلة للوصول ويطالب بفدية لاستعادة الوصول إليها.",
+    answer: true,
+    exp: "صحيح. برنامج الفدية (Ransomware) يجعل البيانات غير قابلة للوصول ويطالب بفدية لاستعادة الوصول إليها."
+  },
+  {
+    type: "mc",
+    q: "الوصول إلى نظام بشكل غير قانوني للتلاعب بالبيانات أو محوها أو سرقتها يسمى:",
+    options: ["الاختراق (Cracking)", "التصيد (Phishing)", "الهندسة الاجتماعية", "التزوير (Skimming)"],
+    answer: 0,
+    exp: "الاختراق (Cracking) هو الوصول إلى نظام بشكل غير قانوني للتلاعب بالبيانات أو محوها أو سرقتها."
+  },
+  {
+    type: "mc",
+    q: "أي مما يلي يعتبر من إرشادات إنشاء كلمات المرور الصحيحة؟",
+    options: ["استخدام أقصر سلسلة ممكنة لتكون سهلة التذكر", "استخدام معلومات شخصية مثل تاريخ الميلاد", "الجمع بين الأحرف الكبيرة والصغيرة والأرقام والرموز", "إعادة استخدام كلمات المرور المستخدمة في خدمات أخرى"],
+    answer: 2,
+    exp: "من إرشادات إنشاء كلمات المرور: الجمع بين الأحرف الكبيرة والصغيرة والأرقام والرموز، واستخدام سلسلة طويلة، وعدم استخدام معلومات شخصية."
+  },
+  {
+    type: "tf",
+    q: "كلمة المرور لمرة واحدة (One-time-password) تتغير على فترات منتظمة ولا يمكن استخدامها إلا مرة واحدة.",
+    answer: true,
+    exp: "صحيح. كلمة المرور لمرة واحدة تتغير على فترات منتظمة ولا يمكن استخدامها إلا مرة واحدة."
+  },
+  {
+    type: "mc",
+    q: "أي مما يلي يعتبر من الأضرار المحتملة إذا لم يتم تأمين عنصر السرية؟",
+    options: ["انقطاع الخدمة", "التلاعب بالمعلومات أو تدميرها", "تسرب المعلومات", "توقف النظام"],
+    answer: 2,
+    exp: "إذا لم يتم تأمين السرية، فقد يحدث تسرب للمعلومات. أما انقطاع الخدمة فيرتبط بالتوافرية، والتلاعب بالمعلومات يرتبط بالسلامة."
+  },
+
+  // ===== الدرس الثاني: كلمات المرور والمصادقة =====
+  {
+    type: "mc",
+    q: "المصادقة باستخدام الخصائص الفيزيائية أو السلوكية للفرد مثل بصمة الإصبع أو القزحية تسمى:",
+    options: ["المصادقة القائمة على المعرفة", "المصادقة القائمة على الحيازة", "المصادقة البيومترية", "المصادقة الثنائية"],
+    answer: 2,
+    exp: "المصادقة البيومترية (Biometric authentication) تستخدم الخصائص الفيزيائية أو السلوكية للفرد مثل بصمة الإصبع والقزحية."
+  },
+  {
+    type: "mc",
+    q: "طريقة للحد من الوصول إلى أنظمة الكمبيوتر أو البيانات بحيث يُسمح فقط لمستخدمين محددين تسمى:",
+    options: ["جدار الحماية (Firewall)", "التحكم في الوصول (Access control)", "المصادقة (Authentication)", "التشفير (Encryption)"],
+    answer: 1,
+    exp: "التحكم في الوصول (Access control) هو طريقة للحد من الوصول إلى أنظمة الكمبيوتر أو البيانات بحيث يُسمح فقط لمستخدمين محددين."
+  },
+  {
+    type: "tf",
+    q: "جدار الحماية (Firewall) هو نظام مُثبت عند نقاط دخول الشبكة لمنع الوصول غير المصرح به من الخارج ولمنع تسرب البيانات من الداخل.",
+    answer: true,
+    exp: "صحيح. جدار الحماية يُثبت عند نقاط دخول الشبكة لمنع الوصول غير المصرح به من الخارج وتسرب البيانات من الداخل."
+  },
+  {
+    type: "mc",
+    q: "المصادقة التي تجمع بين نوعين مختلفين من العوامل مثل رقم PIN ورمز عبر SMS تسمى:",
+    options: ["المصادقة متعددة الخطوات", "المصادقة الثنائية باستخدام عاملين مختلفين", "المصادقة البيومترية", "المصادقة القائمة على المعرفة"],
+    answer: 1,
+    exp: "المصادقة الثنائية باستخدام عاملين مختلفين (Two-factor authentication) تجمع بين نوعين مختلفين من العوامل مثل المعرفة والحيازة."
+  },
+  {
+    type: "mc",
+    q: "أي من الأمثلة التالية يعتبر مصادقة قائمة على الحيازة (Possession-based)؟",
+    options: ["بصمة الإصبع", "معرف المستخدم وكلمة المرور", "بطاقة ذكية", "سؤال سري"],
+    answer: 2,
+    exp: "المصادقة القائمة على الحيازة تستخدم عنصراً يمتلكه الفرد مثل البطاقة الذكية أو كلمة مرور لمرة واحدة أو التحقق من الرسائل النصية."
+  },
+  {
+    type: "tf",
+    q: "كلمة المرور لمرة واحدة (One-time-password) تساعد في منع الوصول غير المصرح به باستخدام كلمة مرور مسربة.",
+    answer: true,
+    exp: "صحيح. كلمة المرور لمرة واحدة تتغير ولا يمكن استخدامها إلا مرة واحدة، مما يمنع الوصول غير المصرح به حتى لو تم تسريب كلمة المرور."
+  },
+  {
+    type: "mc",
+    q: "أي مما يلي يعتبر من إجراءات مواجهة فيروسات الكمبيوتر؟",
+    options: ["عدم تحديث نظام التشغيل", "عدم إنشاء نسخ احتياطية للبيانات", "تثبيت برنامج مكافحة الفيروسات وتحديث تعريفاته", "استخدام كلمات مرور قصيرة"],
+    answer: 2,
+    exp: "من إجراءات مواجهة الفيروسات: تثبيت برنامج مكافحة الفيروسات وتحديث تعريفاته، تحديث نظام التشغيل، وإنشاء نسخ احتياطية بانتظام."
+  },
+  {
+    type: "mc",
+    q: "المصادقة متعددة الخطوات (Two-step authentication) تستخدم:",
+    options: ["نوعين مختلفين من العوامل مثل المعرفة والحيازة", "معلوماتين من نفس نوع العامل مثل كلمة المرور + سؤال سري", "الخصائص الفيزيائية فقط", "عنصر يمتلكه الفرد فقط"],
+    answer: 1,
+    exp: "المصادقة متعددة الخطوات (Two-step authentication) تقوم بالمصادقة على خطوتين باستخدام معلوماتين من نفس نوع العامل، مثل كلمة المرور + سؤال سري."
+  },
+  {
+    type: "tf",
+    q: "من إجراءات أمن المعلومات إنشاء نسخ احتياطية للبيانات بانتظام.",
+    answer: true,
+    exp: "صحيح. إنشاء نسخ احتياطية للبيانات بانتظام من إجراءات أمن المعلومات المهمة لحماية البيانات من الفقدان."
+  },
+  {
+    type: "mc",
+    q: "أي مما يلي يعتبر من الأمثلة على المصادقة القائمة على المعرفة؟",
+    options: ["بصمة الإصبع", "البطاقة الذكية", "معرف المستخدم وكلمة المرور", "التحقق من الرسائل النصية القصيرة"],
+    answer: 2,
+    exp: "المصادقة القائمة على المعرفة تستخدم معلومات يعرفها الفرد فقط مثل معرف المستخدم وكلمة المرور ورمز PIN."
+  },
+
+  // ===== الدرس الثالث: الاحتيال وسياسة أمن المعلومات =====
+  {
+    type: "mc",
+    q: "الاحتيال الذي يؤدي فيه النقر على رابط (URL) في موقع ويب أو بريد إلكتروني تلقائيًا إلى رسالة تدّعي أنه تم إبرام عقد، يليها طلب دفع مبالغ فيه هو:",
+    options: ["الاحتيال بالفواتير (Fraudulent billing)", "الاحتيال بنقرة واحدة (One-click fraud)", "التصيد (Phishing)", "الهندسة الاجتماعية (Social engineering)"],
+    answer: 1,
+    exp: "الاحتيال بنقرة واحدة (One-click fraud) هو احتيال يؤدي فيه النقر على رابط تلقائيًا إلى رسالة تدّعي أنه تم إبرام عقد، يليها طلب دفع مبالغ فيه."
+  },
+  {
+    type: "tf",
+    q: "الاحتيال بالفواتير (Fraudulent billing) هو احتيال يتم فيها إصدار فاتورة لشخص ما مقابل خدمة وهمية لم يستخدمها أبدًا، بهدف الحصول على المال بشكل احتيالي.",
+    answer: true,
+    exp: "صحيح. الاحتيال بالفواتير هو إصدار فاتورة لشخص مقابل خدمة وهمية لم يستخدمها أبدًا بهدف الحصول على المال بشكل احتيالي."
+  },
+  {
+    type: "mc",
+    q: "الاحتيال الذي يستخدم مواقع ويب مزيفة متنكرة على أنها مؤسسات مالية أو هيئات عامة لسرقة المعلومات الشخصية مثل رموز PIN أو تفاصيل الحساب هو:",
+    options: ["الاحتيال بنقرة واحدة", "التصيد (Phishing)", "التزوير (Skimming)", "الاحتيال بالفواتير"],
+    answer: 1,
+    exp: "التصيد (Phishing) هو احتيال يستخدم مواقع ويب مزيفة متنكرة على أنها مؤسسات مالية أو هيئات عامة لسرقة المعلومات الشخصية مثل رموز PIN أو تفاصيل الحساب."
+  },
+  {
+    type: "mc",
+    q: "طريقة للحصول على المعلومات بشكل احتيالي عن طريق استغلال علم النفس البشري أو الإهمال أو قلة الوعي تسمى:",
+    options: ["التصيد (Phishing)", "الهندسة الاجتماعية (Social engineering)", "التزوير (Skimming)", "الاختراق (Cracking)"],
+    answer: 1,
+    exp: "الهندسة الاجتماعية (Social engineering) هي طريقة للحصول على المعلومات بشكل احتيالي عن طريق استغلال علم النفس البشري أو الإهمال أو قلة الوعي."
+  },
+  {
+    type: "tf",
+    q: "انتحال الشخصية (Impersonation) هو التظاهر بأنك شخص آخر - مثل إجراء مكالمة هاتفية باسم الشخص الآخر - للحصول على معلومات.",
+    answer: true,
+    exp: "صحيح. انتحال الشخصية هو التظاهر بأنك شخص آخر للحصول على معلومات، وهو أحد أساليب الهندسة الاجتماعية."
+  },
+  {
+    type: "mc",
+    q: "التلصص على الشاشة أو لوحة مفاتيح شخص لسرقة كلمات المرور أو رموز PIN يسمى:",
+    options: ["انتحال الشخصية (Impersonation)", "التجسس المباشر (Shoulder surfing)", "البحث في المهملات (Dumpster diving)", "التصيد (Phishing)"],
+    answer: 1,
+    exp: "التجسس المباشر (Shoulder surfing) هو التلصص على الشاشة أو لوحة مفاتيح شخص لسرقة كلمات المرور أو رموز PIN."
+  },
+  {
+    type: "mc",
+    q: "البحث في المهملات للحصول على معلومات سرية تم التخلص منها يسمى:",
+    options: ["التجسس المباشر (Shoulder surfing)", "انتحال الشخصية (Impersonation)", "البحث في المهملات (Dumpster diving)", "التزوير (Skimming)"],
+    answer: 2,
+    exp: "البحث في المهملات (Dumpster diving) هو البحث في المهملات للحصول على معلومات سرية تم التخلص منها."
+  },
+  {
+    type: "tf",
+    q: "التزوير (Skimming) هو استخراج البيانات بشكل غير قانوني من بطاقة ائتمان أو خصم خاصة بشخص ما واستخدام البيانات لإنشاء بطاقة مزورة.",
+    answer: true,
+    exp: "صحيح. التزوير (Skimming) هو استخراج البيانات بشكل غير قانوني من بطاقة ائتمان أو خصم واستخدامها لإنشاء بطاقة مزورة."
+  },
+  {
+    type: "mc",
+    q: "مجموعة من القواعد والإرشادات الأساسية التي تضعها شركة أو منظمة للحفاظ على أمن المعلومات وحمايته تسمى:",
+    options: ["جدار الحماية (Firewall)", "سياسة أمن المعلومات (Information Security Policy)", "التحكم في الوصول (Access control)", "المصادقة (Authentication)"],
+    answer: 1,
+    exp: "سياسة أمن المعلومات (Information Security Policy) هي مجموعة من القواعد والإرشادات الأساسية التي تضعها شركة أو منظمة للحفاظ على أمن المعلومات وحمايته."
+  },
+  {
+    type: "mc",
+    q: "أي مما يلي يندرج تحت الهندسة الاجتماعية (Social engineering)؟",
+    options: ["الاتصال من الخارج مع التظاهر بأنك موظف لاستخلاص معلومات داخلية سرية", "البحث في القمامة للحصول على معلومات سرية تم التخلص منها", "إنشاء موقع ويب مزيف يتظاهر بأنه بنك لسرقة رمز PIN", "جميع ما سبق"],
+    answer: 3,
+    exp: "الهندسة الاجتماعية تشمل انتحال الشخصية (الاتصال والتظاهر بأنك موظف)، والتجسس المباشر، والبحث في المهملات، والتصيد. جميع ما سبق يندرج تحت الهندسة الاجتماعية."
+  }
+];
+
+let userAnswers = {};
+let correctAnswers = 0;
+
+function renderQuestions() {
+  const form = document.getElementById('quizForm');
+  questions.forEach((q, i) => {
+    const div = document.createElement('div');
+    div.className = 'question';
+    div.id = 'q' + i;
+
+    let optionsHTML = '';
+    const letters = ['أ', 'ب', 'ت', 'ث'];
+
+    if (q.type === 'tf') {
+      optionsHTML = `
+        <div class="option" data-q="${i}" data-opt="0" onclick="selectOption(${i}, 0)">
+          <span class="label-letter">ص</span>
+          <input type="radio" name="q${i}" value="true" onclick="event.stopPropagation(); selectOption(${i}, 0)">
+          <span>صح</span>
+          <span class="result-icon">${icons.check}</span>
+        </div>
+        <div class="option" data-q="${i}" data-opt="1" onclick="selectOption(${i}, 1)">
+          <span class="label-letter">خ</span>
+          <input type="radio" name="q${i}" value="false" onclick="event.stopPropagation(); selectOption(${i}, 1)">
+          <span>خطأ</span>
+          <span class="result-icon">${icons.x}</span>
+        </div>
+      `;
+    } else {
+      q.options.forEach((opt, j) => {
+        optionsHTML += `
+          <div class="option" data-q="${i}" data-opt="${j}" onclick="selectOption(${i}, ${j})">
+            <span class="label-letter">${letters[j]}</span>
+            <input type="radio" name="q${i}" value="${j}" onclick="event.stopPropagation(); selectOption(${i}, ${j})">
+            <span>${opt}</span>
+            <span class="result-icon">${j === q.answer ? icons.check : icons.x}</span>
+          </div>
+        `;
+      });
+    }
+
+    div.innerHTML = `
+      <div class="q-header">
+        <span class="q-num">${icons.file} سؤال ${i + 1}</span>
+        <span class="q-type ${q.type}">${q.type === 'tf' ? icons.check + ' صح / خطأ' : icons.tag + ' اختيار من متعدد'}</span>
+      </div>
+      <div class="q-text">${q.q}</div>
+      <div class="options">${optionsHTML}</div>
+      <div class="feedback" id="fb${i}"></div>
+    `;
+    form.appendChild(div);
+  });
+}
+
+function selectOption(qIndex, optIndex) {
+  if (userAnswers[qIndex] !== undefined) return;
+
+  userAnswers[qIndex] = optIndex;
+  const q = questions[qIndex];
+  const qDiv = document.getElementById('q' + qIndex);
+  const options = qDiv.querySelectorAll('.option');
+  const fb = document.getElementById('fb' + qIndex);
+
+  let correctIndex;
+  if (q.type === 'tf') {
+    correctIndex = q.answer ? 0 : 1;
+  } else {
+    correctIndex = q.answer;
+  }
+
+  const isCorrect = optIndex === correctIndex;
+  if (isCorrect) correctAnswers++;
+
+  options.forEach((opt, j) => {
+    opt.classList.add('locked');
+    const input = opt.querySelector('input');
+    if (input) input.disabled = true;
+
+    if (j === correctIndex) {
+      opt.classList.add('correct');
+    } else if (j === optIndex && !isCorrect) {
+      opt.classList.add('wrong');
+    }
+  });
+
+  qDiv.classList.add(isCorrect ? 'answered-correct' : 'answered-wrong');
+  fb.className = 'feedback show ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+
+  const correctText = q.type === 'tf' ? (q.answer ? 'صح' : 'خطأ') : q.options[correctIndex];
+
+  if (isCorrect) {
+    fb.innerHTML = `
+      <div class="fb-header"><span class="fb-icon">${icons.check}</span> إجابة صحيحة! أحسنت</div>
+      <div class="fb-exp">${icons.bulb}<span><strong>التفسير:</strong> ${q.exp}</span></div>
+    `;
+  } else {
+    fb.innerHTML = `
+      <div class="fb-header"><span class="fb-icon">${icons.x}</span> إجابة خاطئة</div>
+      <div class="correct-answer-line">${icons.key}<span><strong>الإجابة الصحيحة:</strong> ${correctText}</span></div>
+      <div class="fb-exp">${icons.bulb}<span><strong>التفسير:</strong> ${q.exp}</span></div>
+    `;
+  }
+
+  updateProgress();
+}
+
+function updateProgress() {
+  const answered = Object.keys(userAnswers).length;
+  document.getElementById('answeredCount').textContent = answered;
+  document.getElementById('correctCount').textContent = correctAnswers;
+  const percent = (answered / questions.length) * 100;
+  document.getElementById('progressFill').style.width = percent + '%';
+
+  if (answered === questions.length) {
+    setTimeout(showFinalResult, 600);
+  }
+}
+
+function showFinalResult() {
+  const resultDiv = document.getElementById('result');
+  const score = correctAnswers;
+  const wrong = questions.length - score;
+
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('statCorrect').textContent = score;
+  document.getElementById('statWrong').textContent = wrong;
+
+  const msg = document.getElementById('scoreMsg');
+  const percent = (score / questions.length) * 100;
+
+  if (percent >= 90) msg.textContent = 'ممتاز! أداء رائع جداً، أنت متمكن من الوحدة بالكامل';
+  else if (percent >= 75) msg.textContent = 'جيد جداً! استمر في التقدم';
+  else if (percent >= 60) msg.textContent = 'جيد! يحتاج مراجعة بعض النقاط';
+  else if (percent >= 50) msg.textContent = 'مقبول. راجع الدروس مرة أخرى';
+  else msg.textContent = 'يحتاج إلى مراجعة شاملة للدروس الثلاثة';
+
+  resultDiv.classList.add('show');
+  setTimeout(() => resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+}
+
+renderQuestions();
+</script>
+</body>
+</html>
